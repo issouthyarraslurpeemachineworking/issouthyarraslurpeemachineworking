@@ -317,14 +317,17 @@ async function displayBarrels() {
         card.id = `barrel-${barrel.id}`;
 
 
-        card.innerHTML = `
+card.innerHTML = `
 
-            <h2>🥤 Barrel ${barrel.id}</h2>
+    <h2>🥤 Barrel ${barrel.id}</h2>
 
-            <h3>${barrel.flavour || "Unknown flavour"}</h3>
+    <h3>${barrel.flavour || "Unknown flavour"}</h3>
 
-            <p>${barrel.description || ""}</p>
+    <p>${barrel.description || ""}</p>
 
+    ${
+        barrel.active
+        ? `
             <div class="status">
                 <strong>${statusEmoji} ${statusText}</strong>
             </div>
@@ -346,8 +349,19 @@ async function displayBarrels() {
                 </button>
 
             </div>
+        `
+        : `
+            <div class="status">
+                <strong>⚪ CURRENTLY UNAVAILABLE</strong>
+            </div>
 
-        `;
+            <p>
+                This Slurpee flavour is currently unavailable.
+            </p>
+        `
+    }
+
+`;
 
 
         container.appendChild(card);
@@ -427,7 +441,15 @@ async function displayBarrels() {
 
 // Submit a report
 async function reportStatus(barrelId, status) {
-
+    const { data: barrel } = await supabaseClient
+        .from("barrels")
+        .select("active")
+        .eq("id", barrelId)
+        .single();
+    
+    if (!barrel || !barrel.active) {
+        return;
+    }
     const { error } = await supabaseClient
         .from("reports")
         .insert({
