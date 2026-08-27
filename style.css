@@ -1,0 +1,32 @@
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    margin: 0;
+    padding: 50px 20px;
+}
+
+main {
+    max-width: 700px;
+    margin: auto;
+}
+
+h1 {
+    font-size: 2.5rem;
+}
+
+#status {
+    font-size: 2rem;
+    font-weight: bold;
+    margin: 40px 0;
+}
+
+button {
+    padding: 15px 25px;
+    margin: 10px;
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+#message {
+    margin-top: 25px;
+}
