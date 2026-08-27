@@ -36,7 +36,7 @@ async function getBarrelStatus(barrelId) {
         .select("status, created_at")
         .eq("barrel", barrelId)
         .order("created_at", { ascending: false })
-        .limit(20);
+        .limit(50);
 
     if (error) {
 
@@ -53,25 +53,115 @@ async function getBarrelStatus(barrelId) {
             status: "unknown",
             confidence: null,
             working: 0,
-            broken: 0
+            broken: 0,
+            lastReported: null
         };
     }
 
 
-    const working = data.filter(
-        report => report.status === true
-    ).length;
+    let workingWeight = 0;
+    let brokenWeight = 0;
 
-    const broken = data.filter(
-        report => report.status === false
-    ).length;
+    let working = 0;
+    let broken = 0;
 
-    const confidence = working / data.length;
+    // The newest report is the first one
+    let lastReported = data[0].created_at;
+
+
+    // Work out how much each report should count
+    for (const report of data) {
+
+        const ageMinutes =
+            (Date.now() - new Date(report.created_at).getTime()) / 60000;
+
+
+        let weight;
+
+
+        if (ageMinutes < 15) {
+
+            weight = 1.00;
+
+        } else if (ageMinutes < 60) {
+
+            weight = 0.90;
+
+        } else if (ageMinutes < 180) {
+
+            weight = 0.75;
+
+        } else if (ageMinutes < 360) {
+
+            weight = 0.55;
+
+        } else if (ageMinutes < 720) {
+
+            weight = 0.40;
+
+        } else if (ageMinutes < 1440) {
+
+            weight = 0.25;
+
+        } else if (ageMinutes < 2880) {
+
+            weight = 0.12;
+
+        } else if (ageMinutes < 4320) {
+
+            weight = 0.05;
+
+        } else {
+
+            // Older than 3 days — ignore it
+            weight = 0;
+        }
+
+
+        // Ignore reports older than 3 days
+        if (weight === 0) {
+            continue;
+        }
+
+
+        if (report.status === true) {
+
+            workingWeight += weight;
+            working++;
+
+        } else {
+
+            brokenWeight += weight;
+            broken++;
+        }
+    }
+
+
+    const totalWeight =
+        workingWeight + brokenWeight;
+
+
+    // All reports are older than 3 days
+    if (totalWeight === 0) {
+
+        return {
+            status: "unknown",
+            confidence: null,
+            working: 0,
+            broken: 0,
+            lastReported: lastReported
+        };
+    }
+
+
+    const confidence =
+        workingWeight / totalWeight;
 
 
     let status;
 
-    if (confidence >= 0.75) {
+
+    if (confidence >= 0.70) {
 
         status = "working";
 
@@ -89,10 +179,10 @@ async function getBarrelStatus(barrelId) {
         status: status,
         confidence: confidence,
         working: working,
-        broken: broken
+        broken: broken,
+        lastReported: lastReported
     };
 }
-
 
 // Display the barrels
 async function displayBarrels() {
