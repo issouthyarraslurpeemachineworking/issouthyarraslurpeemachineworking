@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0">
+
+    <title>Slurpee Admin</title>
+
+    <link rel="stylesheet" href="style.css">
+
+</head>
+
+
+<body>
+
+    <main>
+
+        <div class="header">
+
+            <h1>🥤 Slurpee Admin</h1>
+
+            <p>Manage the four South Yarra Slurpee barrels.</p>
+
+        </div>
+
+
+        <!-- LOGIN -->
+
+        <div id="login">
+
+            <h2>Admin Login</h2>
+
+            <input
+                type="email"
+                id="email"
+                placeholder="Email"
+            >
+
+            <input
+                type="password"
+                id="password"
+                placeholder="Password"
+            >
+
+            <button onclick="login()">
+                Log in
+            </button>
+
+            <p id="login-message"></p>
+
+        </div>
+
+
+        <!-- ADMIN PANEL -->
+
+        <div id="admin-panel" style="display: none;">
+
+            <div id="admin-barrels">
+                Loading barrels...
+            </div>
+
+            <button onclick="logout()">
+                Log out
+            </button>
+
+            <p id="admin-message"></p>
+
+        </div>
+
+    </main>
+
+
+    <!-- Supabase -->
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <script src="admin.js"></script>
+
+</body>
+
+</html>
