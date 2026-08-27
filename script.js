@@ -28,7 +28,76 @@ async function getBarrels() {
 }
 
 
-// Display the barrels on the website
+// Get recent reports for one barrel
+async function getBarrelStatus(barrelId) {
+
+    const { data, error } = await supabaseClient
+        .from("reports")
+        .select("*")
+        .eq("barrel", barrelId)
+        .order("created_at", { ascending: false })
+        .limit(20);
+
+    if (error) {
+
+        console.error("Error loading reports:", error);
+
+        return null;
+    }
+
+    // Nobody has reported this barrel
+    if (data.length === 0) {
+
+        return {
+            status: "unknown",
+            confidence: null,
+            working: 0,
+            broken: 0
+        };
+    }
+
+    const working = data.filter(
+        report => report.status === true
+    ).length;
+
+    const broken = data.filter(
+        report => report.status === false
+    ).length;
+
+    const confidence = working / data.length;
+
+
+    if (confidence >= 0.75) {
+
+        return {
+            status: "working",
+            confidence: confidence,
+            working: working,
+            broken: broken
+        };
+
+    } else if (confidence >= 0.40) {
+
+        return {
+            status: "uncertain",
+            confidence: confidence,
+            working: working,
+            broken: broken
+        };
+
+    } else {
+
+        return {
+            status: "broken",
+            confidence: confidence,
+            working: working,
+            broken: broken
+        };
+    }
+}
+
+
+// Display the barrels
 async function displayBarrels() {
 
     const barrels = await getBarrels();
@@ -37,18 +106,69 @@ async function displayBarrels() {
 
     container.innerHTML = "";
 
-    barrels.forEach(barrel => {
+
+    for (const barrel of barrels) {
+
+        const result = await getBarrelStatus(barrel.id);
 
         const card = document.createElement("div");
 
         card.className = "barrel";
 
+
+        let statusText;
+        let statusEmoji;
+
+        if (result.status === "working") {
+
+            statusText = "LIKELY WORKING";
+            statusEmoji = "🟢";
+
+        } else if (result.status === "broken") {
+
+            statusText = "LIKELY NOT WORKING";
+            statusEmoji = "🔴";
+
+        } else if (result.status === "uncertain") {
+
+            statusText = "UNCERTAIN";
+            statusEmoji = "🟡";
+
+        } else {
+
+            statusText = "NO REPORTS";
+            statusEmoji = "⚪";
+        }
+
+
+        let confidenceText = "";
+
+        if (result.confidence !== null) {
+
+            confidenceText =
+                `${Math.round(result.confidence * 100)}% confidence`;
+
+        }
+
+
         card.innerHTML = `
-            <h2>Barrel ${barrel.id}</h2>
+
+            <h2>🥤 Barrel ${barrel.id}</h2>
 
             <h3>${barrel.flavour || "Unknown flavour"}</h3>
 
             <p>${barrel.description || ""}</p>
+
+            <h2>
+                ${statusEmoji} ${statusText}
+            </h2>
+
+            <p>${confidenceText}</p>
+
+            <p>
+                ${result.working} working ·
+                ${result.broken} not working
+            </p>
 
             <button onclick="reportStatus(${barrel.id}, true)">
                 🟢 Working
@@ -57,10 +177,11 @@ async function displayBarrels() {
             <button onclick="reportStatus(${barrel.id}, false)">
                 🔴 Not working
             </button>
+
         `;
 
         container.appendChild(card);
-    });
+    }
 }
 
 
@@ -74,6 +195,7 @@ async function reportStatus(barrelId, status) {
             status: status
         });
 
+
     if (error) {
 
         console.error("Error submitting report:", error);
@@ -84,10 +206,15 @@ async function reportStatus(barrelId, status) {
         return;
     }
 
+
     document.getElementById("message").textContent =
         "Report submitted! Thanks 🥤";
+
+
+    // Refresh the displayed status
+    displayBarrels();
 }
 
 
-// Load the barrels when the page opens
+// Load everything
 displayBarrels();
