@@ -238,3 +238,27 @@ main {
     }
 
 }
+
+/* =========================
+   STATUS COLOURS
+   ========================= */
+
+.barrel.status-working {
+    background: #eef9f0;
+    border: 2px solid #b8dfbf;
+}
+
+.barrel.status-uncertain {
+    background: #fff9e6;
+    border: 2px solid #ead58a;
+}
+
+.barrel.status-broken {
+    background: #fff0f0;
+    border: 2px solid #e5b5b5;
+}
+
+.barrel.status-unknown {
+    background: #f5f5f5;
+    border: 2px solid #dddddd;
+}
