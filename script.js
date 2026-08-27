@@ -160,7 +160,7 @@ async function displayBarrels() {
 
         const card = document.createElement("div");
 
-        card.className = `barrel status-${result.status}`;
+        card.className = `barrel status-${result ? result.status : "unknown"}`;
         card.id = `barrel-${barrel.id}`;
 
 
@@ -286,10 +286,12 @@ async function reportStatus(barrelId, status) {
     }
 
 
-    // Update ONLY this card
+// Update ONLY this card
 card.querySelector(".status").innerHTML =
     `<strong>${statusEmoji} ${statusText}</strong>`;
 
+
+// Update the card colour
 card.classList.remove(
     "status-working",
     "status-uncertain",
@@ -297,13 +299,30 @@ card.classList.remove(
     "status-unknown"
 );
 
-card.classList.add(`status-${result.status}`);
+let newStatus;
 
+if (confidence >= 0.75) {
+    newStatus = "working";
+} else if (confidence >= 0.40) {
+    newStatus = "uncertain";
+} else {
+    newStatus = "broken";
+}
+
+card.classList.add(`status-${newStatus}`);
+
+
+// Update confidence
 card.querySelector(".confidence").textContent =
-    confidenceText;
+    `${Math.round(confidence * 100)}% confidence`;
 
+
+// Update report count
 card.querySelector(".report-count").textContent =
-    `${result.working} working · ${result.broken} not working`;
+    `${working} working · ${broken} not working`;
+
+}
+
 
 // Start the website
 displayBarrels();
