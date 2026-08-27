@@ -160,7 +160,7 @@ async function displayBarrels() {
 
         const card = document.createElement("div");
 
-        card.className = "barrel";
+        card.className = `barrel status-${result.status}`;
         card.id = `barrel-${barrel.id}`;
 
 
