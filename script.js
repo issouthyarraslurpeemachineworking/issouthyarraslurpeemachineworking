@@ -1,10 +1,16 @@
-const SUPABASE_URL = "https://ghteiwpgzifmmbgtlbeg.supabase.co";
-const SUPABASE_KEY = "sb_publishable_QKP33S0B2ABkIJoNKbWW7Q_RJaYp9be";
+const SUPABASE_URL =
+    "https://ghteiwpgzifmmbgtlbeg.supabase.co";
 
-const supabaseClient = window.supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_KEY
-);
+const SUPABASE_KEY =
+    "sb_publishable_QKP33S0B2ABkIJoNKbWW7Q_RJaYp9be";
+
+const supabaseClient =
+    window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+    );
+
+
 // ============================
 // REPORT COOLDOWN
 // ============================
@@ -14,13 +20,18 @@ const REPORT_COOLDOWN = 30 * 1000;
 // Stores when each barrel was last reported
 const reportCooldowns = {};
 
-// Get all barrels
+
+// ============================
+// GET ALL BARRELS
+// ============================
+
 async function getBarrels() {
 
-    const { data, error } = await supabaseClient
-        .from("barrels")
-        .select("*")
-        .order("id");
+    const { data, error } =
+        await supabaseClient
+            .from("barrels")
+            .select("*")
+            .order("id");
 
     if (error) {
 
@@ -36,15 +47,19 @@ async function getBarrels() {
 }
 
 
-// Get the status of one barrel
+// ============================
+// GET STATUS OF ONE BARREL
+// ============================
+
 async function getBarrelStatus(barrelId) {
 
-    const { data, error } = await supabaseClient
-        .from("reports")
-        .select("status, created_at")
-        .eq("barrel", barrelId)
-        .order("created_at", { ascending: false })
-        .limit(50);
+    const { data, error } =
+        await supabaseClient
+            .from("reports")
+            .select("status, created_at")
+            .eq("barrel", barrelId)
+            .order("created_at", { ascending: false })
+            .limit(50);
 
     if (error) {
 
@@ -62,7 +77,8 @@ async function getBarrelStatus(barrelId) {
             confidence: null,
             working: 0,
             broken: 0,
-            lastReported: null
+            lastReported: null,
+            lastReportedStatus: null
         };
     }
 
@@ -73,15 +89,22 @@ async function getBarrelStatus(barrelId) {
     let working = 0;
     let broken = 0;
 
+
     // Newest report
-    let lastReported = data[0].created_at;
+    const lastReported =
+        data[0].created_at;
+
+    const lastReportedStatus =
+        data[0].status;
 
 
     // Work out how much each report should count
     for (const report of data) {
 
         const ageMinutes =
-            (Date.now() - new Date(report.created_at).getTime()) / 60000;
+            (Date.now() -
+                new Date(report.created_at).getTime()) /
+            60000;
 
 
         let weight;
@@ -157,7 +180,8 @@ async function getBarrelStatus(barrelId) {
             confidence: null,
             working: 0,
             broken: 0,
-            lastReported: lastReported
+            lastReported: lastReported,
+            lastReportedStatus: lastReportedStatus
         };
     }
 
@@ -188,13 +212,17 @@ async function getBarrelStatus(barrelId) {
         confidence: confidence,
         working: working,
         broken: broken,
-        lastReported: lastReported
+        lastReported: lastReported,
+        lastReportedStatus: lastReportedStatus
     };
 }
 
 
-// Convert a timestamp into "X minutes ago"
-function timeAgo(timestamp) {
+// ============================
+// TIME AGO
+// ============================
+
+function timeAgo(timestamp, status) {
 
     if (!timestamp) {
         return "No reports yet";
@@ -203,57 +231,86 @@ function timeAgo(timestamp) {
 
     const seconds =
         Math.floor(
-            (Date.now() - new Date(timestamp).getTime()) / 1000
+            (Date.now() -
+                new Date(timestamp).getTime()) /
+            1000
         );
 
 
+    let timeText;
+
+
     if (seconds < 60) {
-        return "Reported just now";
+
+        timeText = "just now";
+
+    } else {
+
+        const minutes =
+            Math.floor(seconds / 60);
+
+
+        if (minutes < 60) {
+
+            timeText =
+                `${minutes} minute${minutes === 1 ? "" : "s"} ago`;
+
+        } else {
+
+            const hours =
+                Math.floor(minutes / 60);
+
+
+            if (hours < 24) {
+
+                timeText =
+                    `${hours} hour${hours === 1 ? "" : "s"} ago`;
+
+            } else {
+
+                const days =
+                    Math.floor(hours / 24);
+
+                timeText =
+                    `${days} day${days === 1 ? "" : "s"} ago`;
+            }
+        }
     }
 
 
-    const minutes = Math.floor(seconds / 60);
+    const statusText =
+        status === true
+            ? "working"
+            : "not working";
 
 
-    if (minutes < 60) {
-
-        return `Last reported ${minutes} minute${minutes === 1 ? "" : "s"} ago`;
-    }
-
-
-    const hours = Math.floor(minutes / 60);
-
-
-    if (hours < 24) {
-
-        return `Last reported ${hours} hour${hours === 1 ? "" : "s"} ago`;
-    }
-
-
-    const days = Math.floor(hours / 24);
-
-
-    return `Last reported ${days} day${days === 1 ? "" : "s"} ago`;
+    return `Last reported ${statusText} ${timeText}`;
 }
 
 
-// Display the barrels
+// ============================
+// DISPLAY THE BARRELS
+// ============================
+
 async function displayBarrels() {
 
-    const barrels = await getBarrels();
+    const barrels =
+        await getBarrels();
 
-    const container = document.getElementById("barrels");
+    const container =
+        document.getElementById("barrels");
 
     container.innerHTML = "";
 
 
-    // Store the results so we can calculate the overall status
+    // Store the results so we can calculate overall status
     const barrelResults = [];
 
 
     for (const barrel of barrels) {
 
-        const result = await getBarrelStatus(barrel.id);
+        const result =
+            await getBarrelStatus(barrel.id);
 
 
         barrelResults.push({
@@ -295,10 +352,16 @@ async function displayBarrels() {
 
         let confidenceText = "";
 
-        if (result && result.confidence !== null) {
+
+        if (
+            result &&
+            result.confidence !== null
+        ) {
 
             confidenceText =
-                `${Math.round(result.confidence * 100)}% confidence`;
+                `${Math.round(
+                    result.confidence * 100
+                )}% confidence`;
         }
 
 
@@ -311,64 +374,94 @@ async function displayBarrels() {
             reportText =
                 `${result.working} working · ${result.broken} not working`;
 
+
             lastReportedText =
-                timeAgo(result.lastReported);
+                timeAgo(
+                    result.lastReported,
+                    result.lastReportedStatus
+                );
         }
 
 
-        const card = document.createElement("div");
+        const card =
+            document.createElement("div");
+
 
         card.className =
             `barrel status-${result ? result.status : "unknown"}`;
 
-        card.id = `barrel-${barrel.id}`;
+
+        card.id =
+            `barrel-${barrel.id}`;
 
 
-card.innerHTML = `
+        card.innerHTML = `
 
-    <h2>🥤 Barrel ${barrel.id}</h2>
+            <h2>🥤 Barrel ${barrel.id}</h2>
 
-    <h3>${barrel.flavour || "Unknown flavour"}</h3>
-
-    <p>${barrel.description || ""}</p>
-
-    ${
-        barrel.active
-        ? `
-            <div class="status">
-                <strong>${statusEmoji} ${statusText}</strong>
-            </div>
-
-            <p class="confidence">${confidenceText}</p>
-
-            <p class="report-count">${reportText}</p>
-
-            <p class="last-reported">${lastReportedText}</p>
-
-            <div class="buttons">
-
-                <button onclick="reportStatus(${barrel.id}, true)">
-                    🟢 Working
-                </button>
-
-                <button onclick="reportStatus(${barrel.id}, false)">
-                    🔴 Not working
-                </button>
-
-            </div>
-        `
-        : `
-            <div class="status">
-                <strong>⚪ CURRENTLY UNAVAILABLE</strong>
-            </div>
+            <h3>
+                ${barrel.flavour || "Unknown flavour"}
+            </h3>
 
             <p>
-                This Slurpee flavour is currently unavailable.
+                ${barrel.description || ""}
             </p>
-        `
-    }
 
-`;
+            ${
+                barrel.active
+                    ? `
+
+                        <div class="status">
+                            <strong>
+                                ${statusEmoji} ${statusText}
+                            </strong>
+                        </div>
+
+                        <p class="confidence">
+                            ${confidenceText}
+                        </p>
+
+                        <p class="report-count">
+                            ${reportText}
+                        </p>
+
+                        <p class="last-reported">
+                            ${lastReportedText}
+                        </p>
+
+                        <div class="buttons">
+
+                            <button
+                                onclick="reportStatus(${barrel.id}, true)"
+                            >
+                                🟢 Working
+                            </button>
+
+                            <button
+                                onclick="reportStatus(${barrel.id}, false)"
+                            >
+                                🔴 Not working
+                            </button>
+
+                        </div>
+
+                    `
+                    : `
+
+                        <div class="status">
+                            <strong>
+                                ⚪ CURRENTLY UNAVAILABLE
+                            </strong>
+                        </div>
+
+                        <p>
+                            This Slurpee flavour is currently unavailable.
+                        </p>
+
+                    `
+            }
+
+        `;
 
 
         container.appendChild(card);
@@ -453,20 +546,25 @@ card.innerHTML = `
 async function reportStatus(barrelId, status) {
 
     // Check whether this barrel is on cooldown
-    const lastReport = reportCooldowns[barrelId];
+    const lastReport =
+        reportCooldowns[barrelId];
+
 
     if (lastReport) {
 
         const elapsed =
             Date.now() - lastReport;
 
+
         const remaining =
             REPORT_COOLDOWN - elapsed;
+
 
         if (remaining > 0) {
 
             const seconds =
                 Math.ceil(remaining / 1000);
+
 
             document.getElementById("message").textContent =
                 `You've already reported Barrel ${barrelId}. Try again in ${seconds}s! 🥤`;
@@ -477,17 +575,22 @@ async function reportStatus(barrelId, status) {
 
 
     // Submit the report
-    const { error } = await supabaseClient
-        .from("reports")
-        .insert({
-            barrel: barrelId,
-            status: status
-        });
+    const { error } =
+        await supabaseClient
+            .from("reports")
+            .insert({
+                barrel: barrelId,
+                status: status
+            });
 
 
     if (error) {
 
-        console.error("Error submitting report:", error);
+        console.error(
+            "Error submitting report:",
+            error
+        );
+
 
         document.getElementById("message").textContent =
             "Something went wrong 😭";
@@ -496,7 +599,7 @@ async function reportStatus(barrelId, status) {
     }
 
 
-    // Start the cooldown ONLY after a successful report
+    // Start cooldown only after successful report
     reportCooldowns[barrelId] =
         Date.now();
 
@@ -507,7 +610,9 @@ async function reportStatus(barrelId, status) {
 
     // Find the existing card
     const card =
-        document.getElementById(`barrel-${barrelId}`);
+        document.getElementById(
+            `barrel-${barrelId}`
+        );
 
 
     if (!card) {
@@ -525,7 +630,9 @@ async function reportStatus(barrelId, status) {
 
 
     const match =
-        text.match(/(\d+) working · (\d+) not working/);
+        text.match(
+            /(\d+) working · (\d+) not working/
+        );
 
 
     if (!match) {
@@ -535,6 +642,7 @@ async function reportStatus(barrelId, status) {
 
     let working =
         parseInt(match[1]);
+
 
     let broken =
         parseInt(match[2]);
@@ -616,8 +724,15 @@ async function reportStatus(barrelId, status) {
 
     // Update the last reported time
     card.querySelector(".last-reported").textContent =
-        "Last reported just now";
+        "Last reported " +
+        (status === true
+            ? "working just now"
+            : "not working just now");
 }
 
-// Start the website
+
+// ============================
+// START THE WEBSITE
+// ============================
+
 displayBarrels();
