@@ -15,7 +15,12 @@ async function getBarrels() {
         .order("id");
 
     if (error) {
+
         console.error("Error loading barrels:", error);
+
+        document.getElementById("barrels").textContent =
+            "Couldn't load the Slurpee barrels 😭";
+
         return [];
     }
 
@@ -23,7 +28,7 @@ async function getBarrels() {
 }
 
 
-// Get reports for one barrel
+// Get the status of one barrel
 async function getBarrelStatus(barrelId) {
 
     const { data, error } = await supabaseClient
@@ -34,20 +39,24 @@ async function getBarrelStatus(barrelId) {
         .limit(20);
 
     if (error) {
+
         console.error("Error loading reports:", error);
+
         return null;
     }
 
-    // No reports
+
+    // No reports yet
     if (data.length === 0) {
+
         return {
             status: "unknown",
             confidence: null,
             working: 0,
-            broken: 0,
-            lastReported: null
+            broken: 0
         };
     }
+
 
     const working = data.filter(
         report => report.status === true
@@ -63,10 +72,15 @@ async function getBarrelStatus(barrelId) {
     let status;
 
     if (confidence >= 0.75) {
+
         status = "working";
+
     } else if (confidence >= 0.40) {
+
         status = "uncertain";
+
     } else {
+
         status = "broken";
     }
 
@@ -75,13 +89,12 @@ async function getBarrelStatus(barrelId) {
         status: status,
         confidence: confidence,
         working: working,
-        broken: broken,
-        lastReported: data[0].created_at
+        broken: broken
     };
 }
 
 
-// Display all barrels
+// Display the barrels
 async function displayBarrels() {
 
     const barrels = await getBarrels();
@@ -94,10 +107,6 @@ async function displayBarrels() {
     for (const barrel of barrels) {
 
         const result = await getBarrelStatus(barrel.id);
-
-        const card = document.createElement("div");
-
-        card.className = "barrel";
 
 
         let statusEmoji;
@@ -149,33 +158,46 @@ async function displayBarrels() {
         }
 
 
-card.innerHTML = `
-    
-    <h2>🥤 Barrel ${barrel.id}</h2>
+        const card = document.createElement("div");
 
-    <h3>${barrel.flavour || "Unknown flavour"}</h3>
+        card.className = "barrel";
 
-    <p>${barrel.description || ""}</p>
 
-    <div class="status">
-        <strong>${statusEmoji} ${statusText}</strong>
-    </div>
+        card.innerHTML = `
 
-    <p>${confidenceText}</p>
+            <h2>🥤 Barrel ${barrel.id}</h2>
 
-    <p>${reportText}</p>
+            <h3>${barrel.flavour || "Unknown flavour"}</h3>
 
-    <div class="buttons">
-        <button onclick="reportStatus(${barrel.id}, true)">
-            🟢 Working
-        </button>
+            <p>${barrel.description || ""}</p>
 
-        <button onclick="reportStatus(${barrel.id}, false)">
-            🔴 Not working
-        </button>
-    </div>
+            <div class="status">
+                <strong>${statusEmoji} ${statusText}</strong>
+            </div>
 
-`;
+            <p>${confidenceText}</p>
+
+            <p>${reportText}</p>
+
+            <div class="buttons">
+
+                <button onclick="reportStatus(${barrel.id}, true)">
+                    🟢 Working
+                </button>
+
+                <button onclick="reportStatus(${barrel.id}, false)">
+                    🔴 Not working
+                </button>
+
+            </div>
+
+        `;
+
+
+        container.appendChild(card);
+    }
+}
+
 
 // Submit a report
 async function reportStatus(barrelId, status) {
