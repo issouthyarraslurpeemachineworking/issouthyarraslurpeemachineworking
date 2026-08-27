@@ -287,15 +287,23 @@ async function reportStatus(barrelId, status) {
 
 
     // Update ONLY this card
-    card.querySelector(".status").innerHTML =
-        `<strong>${statusEmoji} ${statusText}</strong>`;
+card.querySelector(".status").innerHTML =
+    `<strong>${statusEmoji} ${statusText}</strong>`;
 
-    card.querySelector(".confidence").textContent =
-        `${Math.round(confidence * 100)}% confidence`;
+card.classList.remove(
+    "status-working",
+    "status-uncertain",
+    "status-broken",
+    "status-unknown"
+);
 
-    card.querySelector(".report-count").textContent =
-        `${working} working · ${broken} not working`;
-}
+card.classList.add(`status-${result.status}`);
+
+card.querySelector(".confidence").textContent =
+    confidenceText;
+
+card.querySelector(".report-count").textContent =
+    `${result.working} working · ${result.broken} not working`;
 
 // Start the website
 displayBarrels();
