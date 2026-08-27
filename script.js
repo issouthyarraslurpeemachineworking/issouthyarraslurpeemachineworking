@@ -149,36 +149,33 @@ async function displayBarrels() {
         }
 
 
-        card.innerHTML = `
-            
-            <h2>🥤 Barrel ${barrel.id}</h2>
+card.innerHTML = `
+    
+    <h2>🥤 Barrel ${barrel.id}</h2>
 
-            <h3>${barrel.flavour || "Unknown flavour"}</h3>
+    <h3>${barrel.flavour || "Unknown flavour"}</h3>
 
-            <p>${barrel.description || ""}</p>
+    <p>${barrel.description || ""}</p>
 
-            <h2>
-                ${statusEmoji} ${statusText}
-            </h2>
+    <div class="status">
+        <strong>${statusEmoji} ${statusText}</strong>
+    </div>
 
-            <p>${confidenceText}</p>
+    <p>${confidenceText}</p>
 
-            <p>${reportText}</p>
+    <p>${reportText}</p>
 
-            <button onclick="reportStatus(${barrel.id}, true)">
-                🟢 Working
-            </button>
+    <div class="buttons">
+        <button onclick="reportStatus(${barrel.id}, true)">
+            🟢 Working
+        </button>
 
-            <button onclick="reportStatus(${barrel.id}, false)">
-                🔴 Not working
-            </button>
+        <button onclick="reportStatus(${barrel.id}, false)">
+            🔴 Not working
+        </button>
+    </div>
 
-        `;
-
-        container.appendChild(card);
-    }
-}
-
+`;
 
 // Submit a report
 async function reportStatus(barrelId, status) {
