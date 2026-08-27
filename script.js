@@ -161,6 +161,7 @@ async function displayBarrels() {
         const card = document.createElement("div");
 
         card.className = "barrel";
+        card.id = `barrel-${barrel.id}`;
 
 
         card.innerHTML = `
@@ -175,10 +176,10 @@ async function displayBarrels() {
                 <strong>${statusEmoji} ${statusText}</strong>
             </div>
 
-            <p>${confidenceText}</p>
-
-            <p>${reportText}</p>
-
+            <p class="confidence">${confidenceText}</p>
+            
+            <p class="report-count">${reportText}</p>
+            
             <div class="buttons">
 
                 <button onclick="reportStatus(${barrel.id}, true)">
@@ -225,7 +226,62 @@ async function reportStatus(barrelId, status) {
         "Report submitted! Thanks 🥤";
 
 
-    await displayBarrels();
+    // Get the updated status
+    const result = await getBarrelStatus(barrelId);
+
+
+    // Find the existing card
+    const card = document.getElementById(`barrel-${barrelId}`);
+
+
+    if (!card || !result) {
+        return;
+    }
+
+
+    let statusEmoji;
+    let statusText;
+
+
+    if (result.status === "working") {
+
+        statusEmoji = "🟢";
+        statusText = "LIKELY WORKING";
+
+    } else if (result.status === "broken") {
+
+        statusEmoji = "🔴";
+        statusText = "LIKELY NOT WORKING";
+
+    } else if (result.status === "uncertain") {
+
+        statusEmoji = "🟡";
+        statusText = "UNCERTAIN";
+
+    } else {
+
+        statusEmoji = "⚪";
+        statusText = "NO REPORTS";
+    }
+
+
+    let confidenceText = "";
+
+    if (result.confidence !== null) {
+
+        confidenceText =
+            `${Math.round(result.confidence * 100)}% confidence`;
+    }
+
+
+    card.querySelector(".status").innerHTML =
+        `<strong>${statusEmoji} ${statusText}</strong>`;
+
+    card.querySelector(".confidence").textContent =
+        confidenceText;
+
+    card.querySelector(".report-count").textContent =
+        `${result.working} working · ${result.broken} not working`;
 }
 
 
