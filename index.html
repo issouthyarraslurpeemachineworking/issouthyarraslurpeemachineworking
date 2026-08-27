@@ -13,17 +13,38 @@
 
     <main>
 
-        <h1>Is South Yarra Slurpee Machine Working?</h1>
+    <div class="header">
 
-        <p>Report the current status of each Slurpee barrel.</p>
+        <h1>🥤 Is South Yarra Slurpee Working?</h1>
 
-        <div id="barrels">
-            Loading barrels...
-        </div>
+        <p>
+            Live community reports from the four Slurpee barrels
+        </p>
 
-        <p id="message"></p>
+    </div>
 
-    </main>
+
+    <div class="overall-status">
+
+        <h2 id="overall-status">
+            Checking Slurpee status...
+        </h2>
+
+        <p id="overall-details">
+            Gathering reports...
+        </p>
+
+    </div>
+
+
+    <div id="barrels">
+        Loading barrels...
+    </div>
+
+
+    <p id="message"></p>
+
+</main>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="script.js"></script>
