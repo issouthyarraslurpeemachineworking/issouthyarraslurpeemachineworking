@@ -5,7 +5,14 @@ const supabaseClient = window.supabase.createClient(
     SUPABASE_URL,
     SUPABASE_KEY
 );
+// ============================
+// REPORT COOLDOWN
+// ============================
 
+const REPORT_COOLDOWN = 30 * 1000;
+
+// Stores when each barrel was last reported
+const reportCooldowns = {};
 
 // Get all barrels
 async function getBarrels() {
@@ -439,9 +446,37 @@ card.innerHTML = `
 }
 
 
-// Submit a report
+// ============================
+// SUBMIT A REPORT
+// ============================
+
 async function reportStatus(barrelId, status) {
 
+    // Check whether this barrel is on cooldown
+    const lastReport = reportCooldowns[barrelId];
+
+    if (lastReport) {
+
+        const elapsed =
+            Date.now() - lastReport;
+
+        const remaining =
+            REPORT_COOLDOWN - elapsed;
+
+        if (remaining > 0) {
+
+            const seconds =
+                Math.ceil(remaining / 1000);
+
+            document.getElementById("message").textContent =
+                `You've already reported Barrel ${barrelId}. Try again in ${seconds}s! 🥤`;
+
+            return;
+        }
+    }
+
+
+    // Submit the report
     const { error } = await supabaseClient
         .from("reports")
         .insert({
@@ -459,6 +494,11 @@ async function reportStatus(barrelId, status) {
 
         return;
     }
+
+
+    // Start the cooldown ONLY after a successful report
+    reportCooldowns[barrelId] =
+        Date.now();
 
 
     document.getElementById("message").textContent =
@@ -578,7 +618,6 @@ async function reportStatus(barrelId, status) {
     card.querySelector(".last-reported").textContent =
         "Last reported just now";
 }
-
 
 // Start the website
 displayBarrels();
