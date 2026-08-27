@@ -75,7 +75,6 @@ async function showAdmin() {
     document.getElementById("admin-panel").style.display =
         "block";
 
-
     loadBarrels();
 }
 
@@ -106,7 +105,6 @@ async function loadBarrels() {
 
     const container =
         document.getElementById("admin-barrels");
-
 
     container.innerHTML = "";
 
@@ -144,6 +142,20 @@ async function loadBarrels() {
             >${barrel.description || ""}</textarea>
 
 
+            <label>
+                Availability
+            </label>
+
+            <label>
+                <input
+                    type="checkbox"
+                    id="active-${barrel.id}"
+                    ${barrel.active ? "checked" : ""}
+                >
+                Currently available
+            </label>
+
+
             <button onclick="saveBarrel(${barrel.id})">
                 Save Barrel ${barrel.id}
             </button>
@@ -174,12 +186,19 @@ async function saveBarrel(barrelId) {
         ).value;
 
 
+    const active =
+        document.getElementById(
+            `active-${barrelId}`
+        ).checked;
+
+
     const { error } =
         await supabaseClient
             .from("barrels")
             .update({
                 flavour: flavour,
-                description: description
+                description: description,
+                active: active
             })
             .eq("id", barrelId);
 
