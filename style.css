@@ -1,29 +1,70 @@
+/* =========================
+   GENERAL
+   ========================= */
+
 * {
     box-sizing: border-box;
 }
 
 body {
     margin: 0;
-    font-family: Arial, sans-serif;
-    background: #f4f4f4;
-    color: #222;
+    font-family: Arial, Helvetica, sans-serif;
+    background: #f3f4f6;
+    color: #171717;
 }
 
 main {
     width: min(1100px, 94%);
     margin: 0 auto;
-    padding: 35px 0 30px;
+    padding: 28px 0 30px;
 }
 
-h1 {
+
+/* =========================
+   HEADER
+   ========================= */
+
+.header {
     text-align: center;
-    font-size: 2.4rem;
-    margin: 0 0 10px;
+    margin-bottom: 24px;
 }
 
-main > p {
+.header h1 {
+    margin: 0;
+    font-size: 2.5rem;
+    font-weight: 800;
+    letter-spacing: -1px;
+}
+
+.header p {
+    margin: 8px 0 0;
+    color: #666;
+    font-size: 1rem;
+}
+
+
+/* =========================
+   OVERALL STATUS
+   ========================= */
+
+.overall-status {
+    background: white;
+    border-radius: 18px;
+    padding: 16px 20px;
+    margin-bottom: 22px;
+
     text-align: center;
-    margin: 0 0 25px;
+
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+}
+
+.overall-status h2 {
+    margin: 0;
+    font-size: 1.4rem;
+}
+
+.overall-status p {
+    margin: 5px 0 0;
     color: #666;
 }
 
@@ -34,44 +75,88 @@ main > p {
 
 #barrels {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 20px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
 }
 
 
 /* =========================
-   BARREL CARDS
+   BARREL CARD
    ========================= */
 
 .barrel {
     background: white;
-    border-radius: 16px;
+
+    border-radius: 18px;
     padding: 22px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.10);
+
+    min-height: 280px;
+
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
 
     text-align: center;
-
-    min-height: 260px;
 
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+
+    transition:
+        transform 0.15s ease,
+        box-shadow 0.15s ease;
 }
 
+.barrel:hover {
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 7px 20px rgba(0, 0, 0, 0.11);
+}
+
+
+/* =========================
+   BARREL NAME
+   ========================= */
+
 .barrel h2 {
-    margin: 0 0 8px;
-    font-size: 1.5rem;
+    margin: 0;
+    font-size: 1.45rem;
 }
 
 .barrel h3 {
-    margin: 0 0 8px;
+    margin: 5px 0 6px;
     font-size: 1.3rem;
 }
 
 .barrel p {
-    margin: 5px 0;
+    margin: 4px 0;
     color: #666;
+}
+
+
+/* =========================
+   STATUS
+   ========================= */
+
+.status {
+    margin: 14px 0 3px;
+
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+
+/* =========================
+   REPORT INFORMATION
+   ========================= */
+
+.confidence {
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.report-count {
+    font-size: 0.85rem;
+    color: #888;
 }
 
 
@@ -79,21 +164,38 @@ main > p {
    BUTTONS
    ========================= */
 
+.buttons {
+    margin-top: auto;
+    padding-top: 14px;
+
+    display: flex;
+    gap: 8px;
+}
+
 .barrel button {
-    padding: 10px 16px;
-    margin: 10px 4px 0;
-
     border: none;
-    border-radius: 8px;
+    border-radius: 10px;
 
-    font-size: 0.95rem;
+    padding: 10px 15px;
+
+    font-size: 0.9rem;
+    font-weight: 600;
+
     cursor: pointer;
 
-    background: #eee;
+    background: #eeeeee;
+
+    transition:
+        background 0.15s ease,
+        transform 0.1s ease;
 }
 
 .barrel button:hover {
-    background: #ddd;
+    background: #dddddd;
+}
+
+.barrel button:active {
+    transform: scale(0.97);
 }
 
 
@@ -103,37 +205,36 @@ main > p {
 
 #message {
     text-align: center;
-    margin-top: 20px;
-    font-weight: bold;
+
+    margin: 16px 0 0;
+
+    font-weight: 600;
 }
 
 
 /* =========================
-   PHONE
+   MOBILE
    ========================= */
 
-@media (max-width: 650px) {
+@media (max-width: 700px) {
 
     main {
+        width: 92%;
         padding-top: 20px;
     }
 
-    h1 {
-        font-size: 1.8rem;
+    .header h1 {
+        font-size: 1.9rem;
     }
 
     #barrels {
         grid-template-columns: 1fr;
-        gap: 15px;
+        gap: 14px;
     }
 
     .barrel {
-        min-height: 230px;
-        padding: 18px;
+        min-height: 240px;
+        padding: 20px;
     }
-}
 
-.status {
-    margin: 15px 0 5px;
-    font-size: 1.2rem;
 }
