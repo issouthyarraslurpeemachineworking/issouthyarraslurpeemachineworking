@@ -441,15 +441,7 @@ card.innerHTML = `
 
 // Submit a report
 async function reportStatus(barrelId, status) {
-    const { data: barrel } = await supabaseClient
-        .from("barrels")
-        .select("active")
-        .eq("id", barrelId)
-        .single();
-    
-    if (!barrel || !barrel.active) {
-        return;
-    }
+
     const { error } = await supabaseClient
         .from("reports")
         .insert({
@@ -503,7 +495,6 @@ async function reportStatus(barrelId, status) {
 
     let working =
         parseInt(match[1]);
-
 
     let broken =
         parseInt(match[2]);
