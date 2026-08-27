@@ -226,64 +226,76 @@ async function reportStatus(barrelId, status) {
         "Report submitted! Thanks 🥤";
 
 
-    // Get the updated status
-    const result = await getBarrelStatus(barrelId);
-
-
     // Find the existing card
     const card = document.getElementById(`barrel-${barrelId}`);
 
-
-    if (!card || !result) {
+    if (!card) {
         return;
     }
 
 
+    // Get the current numbers displayed on the card
+    const reportCount = card.querySelector(".report-count");
+
+    const text = reportCount.textContent;
+
+    const match = text.match(/(\d+) working · (\d+) not working/);
+
+
+    if (!match) {
+        return;
+    }
+
+
+    let working = parseInt(match[1]);
+    let broken = parseInt(match[2]);
+
+
+    // Add the new report
+    if (status === true) {
+        working++;
+    } else {
+        broken++;
+    }
+
+
+    const total = working + broken;
+
+    const confidence = working / total;
+
+
+    // Work out the new status
     let statusEmoji;
     let statusText;
 
 
-    if (result.status === "working") {
+    if (confidence >= 0.75) {
 
         statusEmoji = "🟢";
         statusText = "LIKELY WORKING";
 
-    } else if (result.status === "broken") {
-
-        statusEmoji = "🔴";
-        statusText = "LIKELY NOT WORKING";
-
-    } else if (result.status === "uncertain") {
+    } else if (confidence >= 0.40) {
 
         statusEmoji = "🟡";
         statusText = "UNCERTAIN";
 
     } else {
 
-        statusEmoji = "⚪";
-        statusText = "NO REPORTS";
+        statusEmoji = "🔴";
+        statusText = "LIKELY NOT WORKING";
     }
 
 
-    let confidenceText = "";
-
-    if (result.confidence !== null) {
-
-        confidenceText =
-            `${Math.round(result.confidence * 100)}% confidence`;
-    }
-
-
+    // Update ONLY this card
     card.querySelector(".status").innerHTML =
         `<strong>${statusEmoji} ${statusText}</strong>`;
 
     card.querySelector(".confidence").textContent =
-        confidenceText;
+        `${Math.round(confidence * 100)}% confidence`;
 
     card.querySelector(".report-count").textContent =
-        `${result.working} working · ${result.broken} not working`;
+        `${working} working · ${broken} not working`;
 }
-
 
 // Start the website
 displayBarrels();
