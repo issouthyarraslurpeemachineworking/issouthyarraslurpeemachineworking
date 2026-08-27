@@ -6,7 +6,7 @@ const supabaseClient = window.supabase.createClient(
     SUPABASE_KEY
 );
 
-// Get the four barrels from the database
+// Get all barrels
 async function getBarrels() {
 
     const { data, error } = await supabaseClient
@@ -15,12 +15,7 @@ async function getBarrels() {
         .order("id");
 
     if (error) {
-
         console.error("Error loading barrels:", error);
-
-        document.getElementById("barrels").textContent =
-            "Couldn't load the Slurpee barrels 😭";
-
         return [];
     }
 
@@ -28,31 +23,29 @@ async function getBarrels() {
 }
 
 
-// Get recent reports for one barrel
+// Get reports for one barrel
 async function getBarrelStatus(barrelId) {
 
     const { data, error } = await supabaseClient
         .from("reports")
-        .select("*")
+        .select("status, created_at")
         .eq("barrel", barrelId)
         .order("created_at", { ascending: false })
         .limit(20);
 
     if (error) {
-
         console.error("Error loading reports:", error);
-
         return null;
     }
 
-    // Nobody has reported this barrel
+    // No reports
     if (data.length === 0) {
-
         return {
             status: "unknown",
             confidence: null,
             working: 0,
-            broken: 0
+            broken: 0,
+            lastReported: null
         };
     }
 
@@ -67,37 +60,28 @@ async function getBarrelStatus(barrelId) {
     const confidence = working / data.length;
 
 
+    let status;
+
     if (confidence >= 0.75) {
-
-        return {
-            status: "working",
-            confidence: confidence,
-            working: working,
-            broken: broken
-        };
-
+        status = "working";
     } else if (confidence >= 0.40) {
-
-        return {
-            status: "uncertain",
-            confidence: confidence,
-            working: working,
-            broken: broken
-        };
-
+        status = "uncertain";
     } else {
-
-        return {
-            status: "broken",
-            confidence: confidence,
-            working: working,
-            broken: broken
-        };
+        status = "broken";
     }
+
+
+    return {
+        status: status,
+        confidence: confidence,
+        working: working,
+        broken: broken,
+        lastReported: data[0].created_at
+    };
 }
 
 
-// Display the barrels
+// Display all barrels
 async function displayBarrels() {
 
     const barrels = await getBarrels();
@@ -116,43 +100,57 @@ async function displayBarrels() {
         card.className = "barrel";
 
 
-        let statusText;
         let statusEmoji;
+        let statusText;
 
-        if (result.status === "working") {
 
-            statusText = "LIKELY WORKING";
+        if (!result) {
+
+            statusEmoji = "❓";
+            statusText = "ERROR";
+
+        } else if (result.status === "working") {
+
             statusEmoji = "🟢";
+            statusText = "LIKELY WORKING";
 
         } else if (result.status === "broken") {
 
-            statusText = "LIKELY NOT WORKING";
             statusEmoji = "🔴";
+            statusText = "LIKELY NOT WORKING";
 
         } else if (result.status === "uncertain") {
 
-            statusText = "UNCERTAIN";
             statusEmoji = "🟡";
+            statusText = "UNCERTAIN";
 
         } else {
 
-            statusText = "NO REPORTS";
             statusEmoji = "⚪";
+            statusText = "NO REPORTS";
         }
 
 
         let confidenceText = "";
 
-        if (result.confidence !== null) {
+        if (result && result.confidence !== null) {
 
             confidenceText =
                 `${Math.round(result.confidence * 100)}% confidence`;
+        }
 
+
+        let reportText = "";
+
+        if (result) {
+
+            reportText =
+                `${result.working} working · ${result.broken} not working`;
         }
 
 
         card.innerHTML = `
-
+            
             <h2>🥤 Barrel ${barrel.id}</h2>
 
             <h3>${barrel.flavour || "Unknown flavour"}</h3>
@@ -165,10 +163,7 @@ async function displayBarrels() {
 
             <p>${confidenceText}</p>
 
-            <p>
-                ${result.working} working ·
-                ${result.broken} not working
-            </p>
+            <p>${reportText}</p>
 
             <button onclick="reportStatus(${barrel.id}, true)">
                 🟢 Working
@@ -185,6 +180,7 @@ async function displayBarrels() {
 }
 
 
+// Submit a report
 async function reportStatus(barrelId, status) {
 
     const { error } = await supabaseClient
@@ -193,6 +189,7 @@ async function reportStatus(barrelId, status) {
             barrel: barrelId,
             status: status
         });
+
 
     if (error) {
 
@@ -204,13 +201,14 @@ async function reportStatus(barrelId, status) {
         return;
     }
 
+
     document.getElementById("message").textContent =
         "Report submitted! Thanks 🥤";
 
-    // Immediately reload the barrel statuses
+
     await displayBarrels();
 }
 
 
-// Load everything
+// Start the website
 displayBarrels();
