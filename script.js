@@ -6,6 +6,7 @@ const supabaseClient = window.supabase.createClient(
     SUPABASE_KEY
 );
 
+
 // Get all barrels
 async function getBarrels() {
 
@@ -65,7 +66,7 @@ async function getBarrelStatus(barrelId) {
     let working = 0;
     let broken = 0;
 
-    // The newest report is the first one
+    // Newest report
     let lastReported = data[0].created_at;
 
 
@@ -113,7 +114,7 @@ async function getBarrelStatus(barrelId) {
 
         } else {
 
-            // Older than 3 days — ignore it
+            // Older than 3 days
             weight = 0;
         }
 
@@ -184,6 +185,51 @@ async function getBarrelStatus(barrelId) {
     };
 }
 
+
+// Convert a timestamp into "X minutes ago"
+function timeAgo(timestamp) {
+
+    if (!timestamp) {
+        return "No reports yet";
+    }
+
+
+    const seconds =
+        Math.floor(
+            (Date.now() - new Date(timestamp).getTime()) / 1000
+        );
+
+
+    if (seconds < 60) {
+        return "Reported just now";
+    }
+
+
+    const minutes = Math.floor(seconds / 60);
+
+
+    if (minutes < 60) {
+
+        return `Last reported ${minutes} minute${minutes === 1 ? "" : "s"} ago`;
+    }
+
+
+    const hours = Math.floor(minutes / 60);
+
+
+    if (hours < 24) {
+
+        return `Last reported ${hours} hour${hours === 1 ? "" : "s"} ago`;
+    }
+
+
+    const days = Math.floor(hours / 24);
+
+
+    return `Last reported ${days} day${days === 1 ? "" : "s"} ago`;
+}
+
+
 // Display the barrels
 async function displayBarrels() {
 
@@ -194,9 +240,19 @@ async function displayBarrels() {
     container.innerHTML = "";
 
 
+    // Store the results so we can calculate the overall status
+    const barrelResults = [];
+
+
     for (const barrel of barrels) {
 
         const result = await getBarrelStatus(barrel.id);
+
+
+        barrelResults.push({
+            barrel: barrel,
+            result: result
+        });
 
 
         let statusEmoji;
@@ -240,17 +296,24 @@ async function displayBarrels() {
 
 
         let reportText = "";
+        let lastReportedText = "";
+
 
         if (result) {
 
             reportText =
                 `${result.working} working · ${result.broken} not working`;
+
+            lastReportedText =
+                timeAgo(result.lastReported);
         }
 
 
         const card = document.createElement("div");
 
-        card.className = `barrel status-${result ? result.status : "unknown"}`;
+        card.className =
+            `barrel status-${result ? result.status : "unknown"}`;
+
         card.id = `barrel-${barrel.id}`;
 
 
@@ -267,9 +330,11 @@ async function displayBarrels() {
             </div>
 
             <p class="confidence">${confidenceText}</p>
-            
+
             <p class="report-count">${reportText}</p>
-            
+
+            <p class="last-reported">${lastReportedText}</p>
+
             <div class="buttons">
 
                 <button onclick="reportStatus(${barrel.id}, true)">
@@ -286,6 +351,76 @@ async function displayBarrels() {
 
 
         container.appendChild(card);
+    }
+
+
+    // =========================
+    // OVERALL STATUS
+    // =========================
+
+    const overallStatus =
+        document.getElementById("overall-status");
+
+    const overallDetails =
+        document.getElementById("overall-details");
+
+
+    if (!overallStatus || !overallDetails) {
+        return;
+    }
+
+
+    const workingBarrels =
+        barrelResults.filter(
+            item =>
+                item.result &&
+                item.result.status === "working"
+        ).length;
+
+
+    const uncertainBarrels =
+        barrelResults.filter(
+            item =>
+                item.result &&
+                item.result.status === "uncertain"
+        ).length;
+
+
+    const brokenBarrels =
+        barrelResults.filter(
+            item =>
+                item.result &&
+                item.result.status === "broken"
+        ).length;
+
+
+    const totalBarrels =
+        barrelResults.length;
+
+
+    if (workingBarrels > brokenBarrels) {
+
+        overallStatus.textContent =
+            `🟢 ${workingBarrels} / ${totalBarrels} BARRELS LIKELY WORKING`;
+
+        overallDetails.textContent =
+            `${uncertainBarrels} uncertain · ${brokenBarrels} likely not working`;
+
+    } else if (brokenBarrels > workingBarrels) {
+
+        overallStatus.textContent =
+            `🔴 ${workingBarrels} / ${totalBarrels} BARRELS LIKELY WORKING`;
+
+        overallDetails.textContent =
+            `${uncertainBarrels} uncertain · ${brokenBarrels} likely not working`;
+
+    } else {
+
+        overallStatus.textContent =
+            `🟡 ${workingBarrels} / ${totalBarrels} BARRELS LIKELY WORKING`;
+
+        overallDetails.textContent =
+            `${uncertainBarrels} uncertain · ${brokenBarrels} likely not working`;
     }
 }
 
@@ -317,7 +452,9 @@ async function reportStatus(barrelId, status) {
 
 
     // Find the existing card
-    const card = document.getElementById(`barrel-${barrelId}`);
+    const card =
+        document.getElementById(`barrel-${barrelId}`);
+
 
     if (!card) {
         return;
@@ -325,11 +462,16 @@ async function reportStatus(barrelId, status) {
 
 
     // Get the current numbers displayed on the card
-    const reportCount = card.querySelector(".report-count");
+    const reportCount =
+        card.querySelector(".report-count");
 
-    const text = reportCount.textContent;
 
-    const match = text.match(/(\d+) working · (\d+) not working/);
+    const text =
+        reportCount.textContent;
+
+
+    const match =
+        text.match(/(\d+) working · (\d+) not working/);
 
 
     if (!match) {
@@ -337,80 +479,91 @@ async function reportStatus(barrelId, status) {
     }
 
 
-    let working = parseInt(match[1]);
-    let broken = parseInt(match[2]);
+    let working =
+        parseInt(match[1]);
+
+
+    let broken =
+        parseInt(match[2]);
 
 
     // Add the new report
     if (status === true) {
+
         working++;
+
     } else {
+
         broken++;
     }
 
 
-    const total = working + broken;
+    const total =
+        working + broken;
 
-    const confidence = working / total;
+
+    const confidence =
+        working / total;
 
 
     // Work out the new status
     let statusEmoji;
     let statusText;
+    let newStatus;
 
 
-    if (confidence >= 0.75) {
+    if (confidence >= 0.70) {
 
         statusEmoji = "🟢";
         statusText = "LIKELY WORKING";
+        newStatus = "working";
 
     } else if (confidence >= 0.40) {
 
         statusEmoji = "🟡";
         statusText = "UNCERTAIN";
+        newStatus = "uncertain";
 
     } else {
 
         statusEmoji = "🔴";
         statusText = "LIKELY NOT WORKING";
+        newStatus = "broken";
     }
 
 
-// Update ONLY this card
-card.querySelector(".status").innerHTML =
-    `<strong>${statusEmoji} ${statusText}</strong>`;
+    // Update the status text
+    card.querySelector(".status").innerHTML =
+        `<strong>${statusEmoji} ${statusText}</strong>`;
 
 
-// Update the card colour
-card.classList.remove(
-    "status-working",
-    "status-uncertain",
-    "status-broken",
-    "status-unknown"
-);
-
-let newStatus;
-
-if (confidence >= 0.75) {
-    newStatus = "working";
-} else if (confidence >= 0.40) {
-    newStatus = "uncertain";
-} else {
-    newStatus = "broken";
-}
-
-card.classList.add(`status-${newStatus}`);
+    // Update the card colour
+    card.classList.remove(
+        "status-working",
+        "status-uncertain",
+        "status-broken",
+        "status-unknown"
+    );
 
 
-// Update confidence
-card.querySelector(".confidence").textContent =
-    `${Math.round(confidence * 100)}% confidence`;
+    card.classList.add(
+        `status-${newStatus}`
+    );
 
 
-// Update report count
-card.querySelector(".report-count").textContent =
-    `${working} working · ${broken} not working`;
+    // Update confidence
+    card.querySelector(".confidence").textContent =
+        `${Math.round(confidence * 100)}% confidence`;
 
+
+    // Update report count
+    card.querySelector(".report-count").textContent =
+        `${working} working · ${broken} not working`;
+
+
+    // Update the last reported time
+    card.querySelector(".last-reported").textContent =
+        "Last reported just now";
 }
 
 
