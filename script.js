@@ -6,94 +6,88 @@ const supabaseClient = window.supabase.createClient(
     SUPABASE_KEY
 );
 
-document.getElementById("working").addEventListener("click", async () => {
-
-    const { error } = await supabaseClient
-        .from("reports")
-        .insert({
-            status: true
-        });
-
-    if (error) {
-        console.error(error);
-        document.getElementById("message").textContent =
-            "Something went wrong 😭";
-        return;
-    }
-
-    document.getElementById("message").textContent =
-        "Report submitted! 🥤";
-});
-
-
-document.getElementById("broken").addEventListener("click", async () => {
-
-    const { error } = await supabaseClient
-        .from("reports")
-        .insert({
-            status: false
-        });
-
-    if (error) {
-        console.error(error);
-        document.getElementById("message").textContent =
-            "Something went wrong 😭";
-        return;
-    }
-
-    document.getElementById("message").textContent =
-        "Report submitted! 😔";
-});
-
-async function getReports() {
+// Get the four barrels from the database
+async function getBarrels() {
 
     const { data, error } = await supabaseClient
-        .from("reports")
+        .from("barrels")
         .select("*")
-        .order("created_at", { ascending: false });
+        .order("id");
 
     if (error) {
-        console.error(error);
+
+        console.error("Error loading barrels:", error);
+
+        document.getElementById("barrels").textContent =
+            "Couldn't load the Slurpee barrels 😭";
+
         return [];
     }
 
     return data;
 }
 
-async function updateStatus() {
 
-    const reports = await getReports();
+// Display the barrels on the website
+async function displayBarrels() {
 
-    if (reports.length === 0) {
-        document.getElementById("status").textContent =
-            "No reports yet";
+    const barrels = await getBarrels();
+
+    const container = document.getElementById("barrels");
+
+    container.innerHTML = "";
+
+    barrels.forEach(barrel => {
+
+        const card = document.createElement("div");
+
+        card.className = "barrel";
+
+        card.innerHTML = `
+            <h2>Barrel ${barrel.id}</h2>
+
+            <h3>${barrel.flavour || "Unknown flavour"}</h3>
+
+            <p>${barrel.description || ""}</p>
+
+            <button onclick="reportStatus(${barrel.id}, true)">
+                🟢 Working
+            </button>
+
+            <button onclick="reportStatus(${barrel.id}, false)">
+                🔴 Not working
+            </button>
+        `;
+
+        container.appendChild(card);
+    });
+}
+
+
+// Submit a report
+async function reportStatus(barrelId, status) {
+
+    const { error } = await supabaseClient
+        .from("reports")
+        .insert({
+            barrel: barrelId,
+            status: status
+        });
+
+    if (error) {
+
+        console.error("Error submitting report:", error);
+
+        document.getElementById("message").textContent =
+            "Something went wrong 😭";
+
         return;
     }
 
-    const recentReports = reports.slice(0, 20);
-
-    const working = recentReports.filter(
-        report => report.status === true
-    ).length;
-
-    const confidence = working / recentReports.length;
-
-    if (confidence >= 0.75) {
-
-        document.getElementById("status").textContent =
-            `🟢 LIKELY WORKING — ${Math.round(confidence * 100)}%`;
-
-    } else if (confidence >= 0.4) {
-
-        document.getElementById("status").textContent =
-            `🟡 UNCERTAIN — ${Math.round(confidence * 100)}%`;
-
-    } else {
-
-        document.getElementById("status").textContent =
-            `🔴 LIKELY BROKEN — ${Math.round(confidence * 100)}%`;
-
-    }
+    document.getElementById("message").textContent =
+        "Report submitted! Thanks 🥤";
 }
 
-updateStatus();
+
+// Load the barrels when the page opens
+displayBarrels();
