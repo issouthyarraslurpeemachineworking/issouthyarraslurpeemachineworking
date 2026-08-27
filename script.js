@@ -185,7 +185,6 @@ async function displayBarrels() {
 }
 
 
-// Submit a report
 async function reportStatus(barrelId, status) {
 
     const { error } = await supabaseClient
@@ -194,7 +193,6 @@ async function reportStatus(barrelId, status) {
             barrel: barrelId,
             status: status
         });
-
 
     if (error) {
 
@@ -206,13 +204,11 @@ async function reportStatus(barrelId, status) {
         return;
     }
 
-
     document.getElementById("message").textContent =
         "Report submitted! Thanks 🥤";
 
-
-    // Refresh the displayed status
-    displayBarrels();
+    // Immediately reload the barrel statuses
+    await displayBarrels();
 }
 
 
